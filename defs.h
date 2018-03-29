@@ -167,6 +167,9 @@ void            uartinit(void);
 void            uartintr(void);
 void            uartputc(int);
 
+// video.c
+void            video_updatescreen(void);
+
 // vm.c
 void            seginit(void);
 void            kvmalloc(void);

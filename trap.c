@@ -48,6 +48,7 @@ trap(struct trapframe *tf)
 
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
+    video_updatescreen();
     if(cpunum() == 0){
       acquire(&tickslock);
       ticks++;
