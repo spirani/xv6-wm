@@ -8,6 +8,8 @@ unsigned char mouse_cycle = 0;
 char mouse_byte[3];
 int mouse_x;
 int mouse_y;
+char mouse_left_down;
+char mouse_right_down;
 
 // Wait for bit 1 of port 0x64 to become clear before writing
 static inline void
@@ -113,6 +115,8 @@ mouseintr(void)
       } else {
         mouse_y -= mouse_byte[2];
       }
+      mouse_left_down = mouse_byte[0] & 1;
+      mouse_right_down = mouse_byte[0] & 2;
       mouse_cycle = 0;
       break;
     }
