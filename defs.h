@@ -87,6 +87,8 @@ void            begin_op();
 void            end_op();
 
 // mouse.c
+extern int     mouse_x;
+extern int     mouse_y;
 void            mouseinit(void);
 void            mouseintr(void);
 

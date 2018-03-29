@@ -6,8 +6,8 @@
 
 unsigned char mouse_cycle = 0;
 char mouse_byte[3];
-char mouse_x;
-char mouse_y;
+int mouse_x;
+int mouse_y;
 
 // Wait for bit 1 of port 0x64 to become clear before writing
 static inline void
@@ -52,6 +52,8 @@ void
 mouseinit(void)
 {
   unsigned char status;
+  mouse_x = 1024/2;
+  mouse_y = 768/2;
 
   // Get Compaq status byte
   mouse_wait_to_write();
@@ -83,20 +85,36 @@ mouseinit(void)
 void
 mouseintr(void)
 {
-  switch(mouse_cycle) {
-  case 0:
-    mouse_byte[0] = inb(0x60);
-    mouse_cycle++;
-    break;
-  case 1:
-    mouse_byte[1] = inb(0x60);
-    mouse_cycle++;
-    break;
-  case 2:
-    mouse_byte[2] = inb(0x60);
-    mouse_x = mouse_byte[1];
-    mouse_y = mouse_byte[2];
-    mouse_cycle = 0;
-    break;
+  // Is there data available, and if so, is it from the mouse?
+  unsigned char status = inb(0x64);
+  if((status & 1) && (status & 32)) {
+    switch(mouse_cycle) {
+    case 0:
+      mouse_byte[0] = inb(0x60);
+      mouse_cycle++;
+      break;
+    case 1:
+      mouse_byte[1] = inb(0x60);
+      mouse_cycle++;
+      break;
+    case 2:
+      mouse_byte[2] = inb(0x60);
+      if(mouse_x + mouse_byte[1] < 0) {
+        mouse_x = 0;
+      } else if(mouse_x + mouse_byte[1] > 1023) {
+        mouse_x = 1023;
+      } else {
+        mouse_x += mouse_byte[1];
+      }
+      if(mouse_y - mouse_byte[2] < 0) {
+        mouse_y = 0;
+      } else if(mouse_y - mouse_byte[1] > 767) {
+        mouse_y = 767;
+      } else {
+        mouse_y -= mouse_byte[2];
+      }
+      mouse_cycle = 0;
+      break;
+    }
   }
 }
