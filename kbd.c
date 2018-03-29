@@ -13,7 +13,7 @@ kbdgetc(void)
   uint st, data, c;
 
   st = inb(KBSTATP);
-  if((st & KBS_DIB) == 0)
+  if((st & KBS_DIB) == 0 || (st & 32) != 0)
     return -1;
   data = inb(KBDATAP);
 
