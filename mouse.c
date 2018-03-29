@@ -1,8 +1,9 @@
 #include "types.h"
 #include "defs.h"
-#include "mouse.h"
 #include "traps.h"
 #include "x86.h"
+
+#define MOUSE_IO_TIMEOUT 100000
 
 unsigned char mouse_cycle = 0;
 char mouse_byte[3];
