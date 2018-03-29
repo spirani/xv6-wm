@@ -217,6 +217,9 @@ QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,
 qemu: fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
+qemu-kvm: fs.img xv6.img
+	$(QEMU) --enable-kvm -serial mon:stdio $(QEMUOPTS)
+
 qemu-memfs: xv6memfs.img
 	$(QEMU) -drive file=xv6memfs.img,index=0,media=disk,format=raw -smp $(CPUS) -m 256
 
