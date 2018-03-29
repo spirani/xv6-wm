@@ -1,0 +1,1 @@
+#define MOUSE_IO_TIMEOUT 100000

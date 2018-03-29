@@ -26,6 +26,7 @@ main(void)
   picinit();       // another interrupt controller
   ioapicinit();    // another interrupt controller
   consoleinit();   // console hardware
+  mouseinit();     // PS/2 mouse initialization
   uartinit();      // serial port
   pinit();         // process table
   tvinit();        // trap vectors
