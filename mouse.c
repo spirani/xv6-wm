@@ -55,8 +55,8 @@ void
 mouseinit(void)
 {
   unsigned char status;
-  mouse_x = 1024/2;
-  mouse_y = 768/2;
+  mouse_x = 1;
+  mouse_y = 1;
 
   // Get Compaq status byte
   mouse_wait_to_write();

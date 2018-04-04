@@ -168,6 +168,7 @@ void            uartintr(void);
 void            uartputc(int);
 
 // video.c
+void            video_init(void);
 void            video_updatescreen(void);
 
 // vm.c
