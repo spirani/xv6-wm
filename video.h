@@ -8,7 +8,8 @@
 #define WINDOW_TITLEBAR_HEIGHT 20
 #define WINDOW_BORDER_SIZE 4
 
-#define TITLEBAR_COLOR 0x1CE7
+#define WINDOW_ACTIVE_COLOR 0x3DEF
+#define WINDOW_INACTIVE_COLOR 0x1CE7
 
 #define COORD_TO_LINEAR(r, c, w) ((r)*(w)+(c))
 #define ROUND_UP_PAGE_BOUND(v) ((((v) & 0xFFF) == 0) ? ((v) >> 12) : (((v) >> 12) + 1))
@@ -23,4 +24,5 @@ typedef struct {
 
 static void video_mouse_handle();
 static Window *video_window_create(int win_x, int win_y);
-static void video_window_draw(Window *w);
+static void video_window_destroy(Window *w);
+static void video_window_draw(Window *w, unsigned short color);

@@ -83,10 +83,13 @@ video_updatescreen(void)
   }
 
   // Draw windows
-  for(int i = NUM_WINDOWS-1; i >= 0; i--) {
+  for(int i = NUM_WINDOWS-1; i >= 1; i--) {
     if(window_stack[i]) {
-      video_window_draw(window_stack[i]);
+      video_window_draw(window_stack[i], WINDOW_INACTIVE_COLOR);
     }
+  }
+  if(window_stack[0]) {
+    video_window_draw(window_stack[0], WINDOW_ACTIVE_COLOR);
   }
 
   // Draw cursor
@@ -133,8 +136,16 @@ video_mouse_handle()
           // Is cursor inside titlebar?
           if(prev_mouse_y <= (window_stack[0]->y_pos +
                               WINDOW_TITLEBAR_HEIGHT)) {
-            // Initiate dragging operation
-            dragged_window = window_stack[0];
+            if(prev_mouse_x >= (window_stack[0]->x_pos +
+                                WINDOW_BORDER_SIZE +
+                                WINDOW_WIDTH -
+                                IMAGE_CLOSE_BUTTON_WIDTH)) {
+              // Clicking on close button?
+              video_window_destroy(window_stack[0]);
+            } else {
+              // Initiate dragging operation
+              dragged_window = window_stack[0];
+            }
           }
           break;
         }
@@ -193,7 +204,26 @@ video_window_create(int win_x, int win_y)
 }
 
 static void
-video_window_draw(Window *w)
+video_window_destroy(Window *w)
+{
+  // Mark it as free
+  w->active = 0;
+  windows_active--;
+
+  // Remove from stack
+  for(int i = 0; i < NUM_WINDOWS; i++) {
+    if(window_stack[i] == w) {
+      for(int j = i+1; j < NUM_WINDOWS; j++) {
+        window_stack[j-1] = window_stack[j];
+      }
+      window_stack[NUM_WINDOWS-1] = 0;
+      break;
+    }
+  }
+}
+
+static void
+video_window_draw(Window *w, unsigned short color)
 {
   int counter;
   int pixel_counter = 0;
@@ -210,7 +240,7 @@ video_window_draw(Window *w)
   counter = COORD_TO_LINEAR(w->y_pos, w->x_pos, VIDEO_WIDTH);
   for(int r = 0; r < WINDOW_TITLEBAR_HEIGHT; r++) {
     for(int c = 0; c < WINDOW_WIDTH+(WINDOW_BORDER_SIZE*2); c++) {
-      buffer[counter] = TITLEBAR_COLOR;
+      buffer[counter] = color;
       counter++;
     }
     counter = counter - (WINDOW_WIDTH+(WINDOW_BORDER_SIZE*2)) + VIDEO_WIDTH;
@@ -219,7 +249,7 @@ video_window_draw(Window *w)
   // Draw side borders
   for(int r = 0; r < WINDOW_HEIGHT; r++) {
     for(int c = 0; c < WINDOW_BORDER_SIZE; c++) {
-      buffer[counter] = TITLEBAR_COLOR;
+      buffer[counter] = color;
       counter++;
     }
     for(int c = 0; c < WINDOW_WIDTH; c++) {
@@ -228,7 +258,7 @@ video_window_draw(Window *w)
       pixel_counter++;
     }
     for(int c = 0; c < WINDOW_BORDER_SIZE; c++) {
-      buffer[counter] = TITLEBAR_COLOR;
+      buffer[counter] = color;
       counter++;
     }
     counter = counter - (WINDOW_WIDTH+(WINDOW_BORDER_SIZE*2)) + VIDEO_WIDTH;
@@ -237,9 +267,24 @@ video_window_draw(Window *w)
   // Draw bottom
   for(int r = 0; r < WINDOW_BORDER_SIZE; r++) {
     for(int c = 0; c < WINDOW_WIDTH+(WINDOW_BORDER_SIZE*2); c++) {
-      buffer[counter] = TITLEBAR_COLOR;
+      buffer[counter] = color;
       counter++;
     }
     counter = counter - (WINDOW_WIDTH+(WINDOW_BORDER_SIZE*2)) + VIDEO_WIDTH;
+  }
+
+  // Draw close button
+  counter = COORD_TO_LINEAR(
+    w->y_pos+2,
+    w->x_pos+WINDOW_WIDTH + WINDOW_BORDER_SIZE - IMAGE_CLOSE_BUTTON_WIDTH,
+    VIDEO_WIDTH);
+  pixel_counter = 0;
+  for(int r = 0; r < IMAGE_CLOSE_BUTTON_HEIGHT; r++) {
+    for(int c = 0; c < IMAGE_CLOSE_BUTTON_WIDTH; c++) {
+      buffer[counter] = IMAGE_CLOSE_BUTTON_DATA[pixel_counter];
+      counter++;
+      pixel_counter++;
+    }
+    counter = counter + VIDEO_WIDTH - IMAGE_CLOSE_BUTTON_WIDTH;
   }
 }
