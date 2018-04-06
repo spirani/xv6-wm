@@ -53,7 +53,6 @@ trap(struct trapframe *tf)
       ticks++;
       wakeup(&ticks);
       release(&tickslock);
-    } else if(cpunum() == 1) {
       video_updatescreen();
     }
     lapiceoi();
