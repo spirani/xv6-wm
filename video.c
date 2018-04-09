@@ -192,6 +192,7 @@ video_window_create(int win_x, int win_y)
 
   // Return null if all windows are used.
   if(!new_window) {
+    release(&window_lock);
     return 0;
   }
 
@@ -222,6 +223,8 @@ video_window_init(struct proc *p)
 
   // If not, give it a new window
   Window *temp = video_window_create(100, 100);
+  if(temp == 0)
+    return -1;
   temp->proc = p;
   return 0;
 }
