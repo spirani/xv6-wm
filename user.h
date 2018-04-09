@@ -23,6 +23,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int initwindow();
+int drawwindow(void*);
 
 // ulib.c
 int stat(char*, struct stat*);

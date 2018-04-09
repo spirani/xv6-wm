@@ -1,5 +1,10 @@
 #include "types.h"
 #include "defs.h"
+#include "spinlock.h"
+#include "param.h"
+#include "memlayout.h"
+#include "mmu.h"
+#include "proc.h"
 #include "images.h"
 #include "video.h"
 
@@ -21,9 +26,14 @@ static int prev_mouse_y = 1;
 static char prev_mouse_left_down = 0;
 static char prev_mouse_right_down = 0;
 
+// Mutex lock for data structures
+struct spinlock window_lock;
+
 void
 video_init(void)
 {
+  initlock(&window_lock, "window");
+
   // Allocate space for a video buffer
   void *base_mem;
   for(int i = 0; i < ROUND_UP_PAGE_BOUND(VIDEO_HEIGHT*VIDEO_WIDTH*2); i++) {
@@ -48,17 +58,8 @@ video_init(void)
     windows[i].x_pos = 0;
     windows[i].y_pos = 0;
     windows[i].active = 0;
+    windows[i].proc = 0;
     window_stack[i] = 0;
-  }
-
-  // Make a few example windows
-  Window *temp1 = video_window_create(100, 100);
-  Window *temp2 = video_window_create(200, 200);
-  Window *temp3 = video_window_create(300, 300);
-  for(int i = 0; i < (WINDOW_WIDTH*WINDOW_HEIGHT/4); i++) {
-    ((volatile ull *)(temp1->pixels))[i] = 0x3C003C003C003C00;
-    ((volatile ull *)(temp2->pixels))[i] = 0x01E001E001E001E0;
-    ((volatile ull *)(temp3->pixels))[i] = 0x000F000F000F000F;
   }
 
   video_initialized = 1;
@@ -179,6 +180,9 @@ video_window_create(int win_x, int win_y)
 {
   // Find an unused window slot
   Window *new_window = 0;
+
+  acquire(&window_lock);
+
   for(int i = 0; i < NUM_WINDOWS; i++) {
     if(windows[i].active == 0) {
       new_window = &windows[i];
@@ -200,12 +204,54 @@ video_window_create(int win_x, int win_y)
   }
   window_stack[0] = new_window;
   windows_active++;
+
+  release(&window_lock);
+
   return new_window;
+}
+
+int
+video_window_init(struct proc *p)
+{
+  // Does this process already have a window?
+  for(int i = 0; i < NUM_WINDOWS; i++) {
+    if(windows[i].active && windows[i].proc == p) {
+      return -1;
+    }
+  }
+
+  // If not, give it a new window
+  Window *temp = video_window_create(100, 100);
+  temp->proc = p;
+  return 0;
+}
+
+void
+video_window_copy_window(struct proc *p, void *window_buffer)
+{
+  // Find this process's window
+  Window *w = 0;
+  for(int i = 0; i < NUM_WINDOWS; i++) {
+    if(windows[i].active && windows[i].proc == p) {
+      w = &windows[i];
+      break;
+    }
+  }
+  if(w == 0)
+    return;
+
+  // If found, copy window data over
+  void *pixels = (void *)(w->pixels);
+  for(int i = 0; i < WINDOW_HEIGHT*WINDOW_WIDTH*2/8; i++) {
+    ((volatile ull *)pixels)[i] = ((volatile ull *)window_buffer)[i];
+  }
 }
 
 static void
 video_window_destroy(Window *w)
 {
+  acquire(&window_lock);
+
   // Mark it as free
   w->active = 0;
   windows_active--;
@@ -220,6 +266,14 @@ video_window_destroy(Window *w)
       break;
     }
   }
+
+  // Kill its process
+  if(w->proc) {
+    w->proc->killed = 1;
+    w->proc = 0;
+  }
+
+  release(&window_lock);
 }
 
 static void

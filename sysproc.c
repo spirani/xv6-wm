@@ -89,3 +89,19 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int
+sys_initwindow(void)
+{
+  return video_window_init(proc);
+}
+
+int
+sys_drawwindow(void)
+{
+  void *window_buffer;
+  if(argptr(0, (void*)&window_buffer, 300*400*2) < 0)
+    return -1;
+  video_window_copy_window(proc, window_buffer);
+  return 0;
+}

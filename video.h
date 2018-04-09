@@ -20,6 +20,7 @@ typedef struct {
   unsigned int x_pos;
   unsigned int y_pos;
   char active;
+  struct proc *proc;
 } Window;
 
 static void video_mouse_handle();
