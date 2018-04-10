@@ -51,13 +51,13 @@ main(int argc, char *argv[])
           y_coord = event & 0xFFFF;
         }
       }
-      for(int i = x_coord; i < MIN(x_coord+SQUARE_SIZE, 400); i++) {
-        for(int j = y_coord; j < MIN(y_coord+SQUARE_SIZE, 300); j++) {
+      for(int i = MIN(x_coord, 400-SQUARE_SIZE); i < MIN(x_coord+SQUARE_SIZE, 400); i++) {
+        for(int j = MIN(y_coord, 300-SQUARE_SIZE); j < MIN(y_coord+SQUARE_SIZE, 300); j++) {
           video_buffer[j*400+i] = SQUARE_COLOR;
         }
       }
       if(drawwindow((void*)video_buffer) != 0) {
-	      printf(1, "something's wrong!\n");
+        printf(1, "something's wrong!\n");
       }
     }
   } else {
