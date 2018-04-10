@@ -113,7 +113,7 @@ sys_getinput(void)
   if(argptr(0, (void*)&event_buffer, sizeof(unsigned long long)) < 0)
     return -1;
   unsigned long long temp = video_event_dequeue(proc);
-  if(!((temp >> 32) & 0x0000FFFF)) {
+  if(temp == 0) {
     return -1;
   }
   *event_buffer = temp;

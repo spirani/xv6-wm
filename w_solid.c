@@ -45,10 +45,13 @@ main(int argc, char *argv[])
       }
 
       if(getinput(&event) != -1) {
-        int type = (event >> 32) & 0xFFFFFFFF;
-        if(type == 6) {
-          x_coord = (event >> 16) & 0xFFFF;
-          y_coord = event & 0xFFFF;
+        int type = (event >> 48) & 0xFFFF;
+        if(type & 16) {
+          x_coord = (event >> 32) & 0xFFFF;
+          y_coord = (event >> 16) & 0xFFFF;
+        }
+        if(type & 32) {
+          printf(1, "Key pressed: %d\n", event & 0xFFFF);
         }
       }
       for(int i = MIN(x_coord, 400-SQUARE_SIZE); i < MIN(x_coord+SQUARE_SIZE, 400); i++) {

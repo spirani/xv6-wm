@@ -26,6 +26,12 @@ static int prev_mouse_y = 1;
 static char prev_mouse_left_down = 0;
 static char prev_mouse_right_down = 0;
 
+// Tracked keyboard data
+static int curr_kbd_pressed;
+static int curr_kbd_key_identifier;
+static int prev_kbd_pressed;
+static int prev_kbd_key_identifier;
+
 // Mutex lock for data structures
 struct spinlock window_lock;
 
@@ -74,11 +80,13 @@ video_updatescreen(void)
   if(!video_initialized)
     return;
 
-  // Record a fixed set of mouse data for this iteration
+  // Record a fixed set of mouse and keyboard data for this iteration
   curr_mouse_x = mouse_x;
   curr_mouse_y = mouse_y;
   curr_mouse_left_down = mouse_left_down;
   curr_mouse_right_down = mouse_right_down;
+  curr_kbd_pressed = kbd_pressed;
+  curr_kbd_key_identifier = kbd_key_identifier;
 
   // Copy and clear buffer
   for(int i = 0; i < VIDEO_HEIGHT*VIDEO_WIDTH*2/8; i++) {
@@ -107,11 +115,13 @@ video_updatescreen(void)
   video_mouse_handle();
   video_input_window_handle();
 
-  // Update prev mouse events
+  // Update prev mouse and kbd events
   prev_mouse_x = curr_mouse_x;
   prev_mouse_y = curr_mouse_y;
   prev_mouse_left_down = curr_mouse_left_down;
   prev_mouse_right_down = curr_mouse_right_down;
+  prev_kbd_pressed = curr_kbd_pressed;
+  prev_kbd_key_identifier = curr_kbd_key_identifier;
 }
 
 static void
@@ -185,7 +195,8 @@ video_input_window_handle()
   // Only queue up events for user if not dragging and at least one window
   input_event new_event;
   new_event.type = 0;
-  new_event.data = 0;
+  new_event.mouse_data = 0;
+  new_event.key_data = 0;
   if((!dragged_window) && windows_active) {
     // Only queue up events if cursor is inside the window
     if((curr_mouse_x >= (window_stack[0]->x_pos +
@@ -200,17 +211,17 @@ video_input_window_handle()
                          WINDOW_HEIGHT))) {
       if(!prev_mouse_left_down && curr_mouse_left_down) {
         // Left mouse down
-        new_event.type = 2;
+        new_event.type |= 1;
       } else if(prev_mouse_left_down && !curr_mouse_left_down) {
         // Left mouse up
-        new_event.type = 3;
+        new_event.type |= 2;
       }
       if(!prev_mouse_right_down && curr_mouse_right_down) {
         // Right mouse down
-        new_event.type = 4;
+        new_event.type |= 4;
       } else if(prev_mouse_right_down && !curr_mouse_right_down) {
         // Right mouse up
-        new_event.type = 5;
+        new_event.type |= 8;
       }
       if((prev_mouse_x != curr_mouse_x) || (prev_mouse_y != curr_mouse_y)) {
         // Mouse moved
@@ -220,8 +231,13 @@ video_input_window_handle()
         int window_y = curr_mouse_y -
           window_stack[0]->y_pos -
           WINDOW_TITLEBAR_HEIGHT;
-        new_event.type = 6;
-        new_event.data = (window_x << 16) | window_y;
+        new_event.type |= 16;
+        new_event.mouse_data = (window_x << 16) | window_y;
+      }
+      if(prev_kbd_key_identifier != curr_kbd_key_identifier) {
+        // Key pressed
+        new_event.type |= 32;
+        new_event.key_data = curr_kbd_pressed;
       }
     }
   }
@@ -449,7 +465,8 @@ video_event_dequeue(struct proc *p)
 
   input_event to_return;
   to_return.type = 0;
-  to_return.data = 99;
+  to_return.mouse_data = 0;
+  to_return.key_data = 0;
 
   acquire(&(w->event_queue_lock));
 
@@ -466,5 +483,7 @@ video_event_dequeue(struct proc *p)
     w->event_queue_head = (w->event_queue_head + 1) % INPUT_QUEUE_SIZE;
   }
   release(&(w->event_queue_lock));
-  return (((unsigned long long int)(to_return.type) << 32) | (to_return.data));
+  return (((unsigned long long int)(to_return.type) << 48) |
+          ((unsigned long long int)(to_return.mouse_data) << 16) |
+          ((unsigned long long int)(to_return.key_data)));
 }

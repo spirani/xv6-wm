@@ -21,7 +21,8 @@
 
 typedef struct {
   unsigned char type;
-  unsigned int data;
+  unsigned int mouse_data;
+  unsigned int key_data;
 } input_event;
 
 typedef struct {

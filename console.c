@@ -14,6 +14,9 @@
 #include "proc.h"
 #include "x86.h"
 
+int kbd_pressed;
+int kbd_key_identifier;
+
 static void consputc(int);
 
 static int panicked = 0;
@@ -213,6 +216,8 @@ consoleintr(int (*getc)(void))
       break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
+        kbd_pressed = c;
+        kbd_key_identifier++;
         c = (c == '\r') ? '\n' : c;
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
@@ -288,6 +293,8 @@ consoleinit(void)
 {
   initlock(&cons.lock, "console");
 
+  kbd_key_identifier = 0;
+
   devsw[CONSOLE].write = consolewrite;
   devsw[CONSOLE].read = consoleread;
   cons.locking = 1;
@@ -295,4 +302,3 @@ consoleinit(void)
   picenable(IRQ_KBD);
   ioapicenable(IRQ_KBD, 0);
 }
-

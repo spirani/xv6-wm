@@ -16,6 +16,8 @@ void            brelse(struct buf*);
 void            bwrite(struct buf*);
 
 // console.c
+extern int      kbd_pressed;
+extern int      kbd_key_identifier;
 void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
