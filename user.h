@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int initwindow();
 int drawwindow(void*);
+int getinput(unsigned long long *);
 
 // ulib.c
 int stat(char*, struct stat*);

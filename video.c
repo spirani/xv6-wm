@@ -32,7 +32,7 @@ struct spinlock window_lock;
 void
 video_init(void)
 {
-  initlock(&window_lock, "window");
+  initlock(&window_lock, "video");
 
   // Allocate space for a video buffer
   void *base_mem;
@@ -59,6 +59,9 @@ video_init(void)
     windows[i].y_pos = 0;
     windows[i].active = 0;
     windows[i].proc = 0;
+    initlock(&(windows[i].event_queue_lock), "window");
+    windows[i].event_queue_head = -1;
+    windows[i].event_queue_tail = -1;
     window_stack[i] = 0;
   }
 
@@ -102,6 +105,7 @@ video_updatescreen(void)
   }
 
   video_mouse_handle();
+  video_input_window_handle();
 
   // Update prev mouse events
   prev_mouse_x = curr_mouse_x;
@@ -175,6 +179,57 @@ video_mouse_handle()
   }
 }
 
+static void
+video_input_window_handle()
+{
+  // Only queue up events for user if not dragging and at least one window
+  input_event new_event;
+  new_event.type = 0;
+  new_event.data = 0;
+  if((!dragged_window) && windows_active) {
+    // Only queue up events if cursor is inside the window
+    if((curr_mouse_x >= (window_stack[0]->x_pos +
+                         WINDOW_BORDER_SIZE)) &&
+       (curr_mouse_x <= (window_stack[0]->x_pos +
+                         WINDOW_BORDER_SIZE +
+                         WINDOW_WIDTH)) &&
+       (curr_mouse_y >= (window_stack[0]->y_pos +
+                         WINDOW_TITLEBAR_HEIGHT)) &&
+       (curr_mouse_y <= (window_stack[0]->y_pos +
+                         WINDOW_TITLEBAR_HEIGHT +
+                         WINDOW_HEIGHT))) {
+      if(!prev_mouse_left_down && curr_mouse_left_down) {
+        // Left mouse down
+        new_event.type = 2;
+      } else if(prev_mouse_left_down && !curr_mouse_left_down) {
+        // Left mouse up
+        new_event.type = 3;
+      }
+      if(!prev_mouse_right_down && curr_mouse_right_down) {
+        // Right mouse down
+        new_event.type = 4;
+      } else if(prev_mouse_right_down && !curr_mouse_right_down) {
+        // Right mouse up
+        new_event.type = 5;
+      }
+      if((prev_mouse_x != curr_mouse_x) || (prev_mouse_y != curr_mouse_y)) {
+        // Mouse moved
+        int window_x = curr_mouse_x -
+          window_stack[0]->x_pos -
+          WINDOW_BORDER_SIZE;
+        int window_y = curr_mouse_y -
+          window_stack[0]->y_pos -
+          WINDOW_TITLEBAR_HEIGHT;
+        new_event.type = 6;
+        new_event.data = (window_x << 16) | window_y;
+      }
+    }
+  }
+  if(new_event.type != 0) {
+    video_event_enqueue(window_stack[0], new_event);
+  }
+}
+
 static Window *
 video_window_create(int win_x, int win_y)
 {
@@ -233,6 +288,7 @@ void
 video_window_copy_window(struct proc *p, void *window_buffer)
 {
   // Find this process's window
+  acquire(&window_lock);
   Window *w = 0;
   for(int i = 0; i < NUM_WINDOWS; i++) {
     if(windows[i].active && windows[i].proc == p) {
@@ -240,8 +296,11 @@ video_window_copy_window(struct proc *p, void *window_buffer)
       break;
     }
   }
-  if(w == 0)
+  if(w == 0) {
+    release(&window_lock);
     return;
+  }
+  release(&window_lock);
 
   // If found, copy window data over
   void *pixels = (void *)(w->pixels);
@@ -344,4 +403,68 @@ video_window_draw(Window *w, unsigned short color)
     }
     counter = counter + VIDEO_WIDTH - IMAGE_CLOSE_BUTTON_WIDTH;
   }
+}
+
+static int
+video_event_enqueue(Window *w, input_event data)
+{
+  acquire(&(w->event_queue_lock));
+
+  if(w->event_queue_head == -1 && w->event_queue_tail == -1) {
+    // Empty queue?
+    w->event_queue_head = 0;
+    w->event_queue_tail = 0;
+    w->event_queue[0] = data;
+  } else if(((w->event_queue_tail + 1) % INPUT_QUEUE_SIZE) != w->event_queue_head) {
+    // Space available?
+    w->event_queue_tail = (w->event_queue_tail + 1) % INPUT_QUEUE_SIZE;
+    w->event_queue[w->event_queue_tail] = data;
+  } else {
+    // Queue full?
+    release(&(w->event_queue_lock));
+    cprintf("event queue full! %d\n", data.type);
+    return -1;
+  }
+  release(&(w->event_queue_lock));
+  return 0;
+}
+
+unsigned long long
+video_event_dequeue(struct proc *p)
+{
+  // Find this process's window
+  acquire(&window_lock);
+  Window *w = 0;
+  for(int i = 0; i < NUM_WINDOWS; i++) {
+    if(windows[i].active && windows[i].proc == p) {
+      w = &windows[i];
+      break;
+    }
+  }
+  if(w == 0) {
+    release(&window_lock);
+    return 0;
+  }
+  release(&window_lock);
+
+  input_event to_return;
+  to_return.type = 0;
+  to_return.data = 99;
+
+  acquire(&(w->event_queue_lock));
+
+  if(w->event_queue_head == -1 && w->event_queue_tail == -1) {
+    // Queue empty?
+  } else if(w->event_queue_head == w->event_queue_tail) {
+    // One item left?
+    to_return = w->event_queue[w->event_queue_tail];
+    w->event_queue_head = -1;
+    w->event_queue_tail = -1;
+  } else {
+    // More than one item left?
+    to_return = w->event_queue[w->event_queue_head];
+    w->event_queue_head = (w->event_queue_head + 1) % INPUT_QUEUE_SIZE;
+  }
+  release(&(w->event_queue_lock));
+  return (((unsigned long long int)(to_return.type) << 32) | (to_return.data));
 }

@@ -172,6 +172,7 @@ void            video_init(void);
 void            video_updatescreen(void);
 int             video_window_init(struct proc *p);
 void            video_window_copy_window(struct proc *p, void *window_buffer);
+unsigned long long video_event_dequeue(struct proc *p);
 
 // vm.c
 void            seginit(void);

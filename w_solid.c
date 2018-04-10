@@ -1,6 +1,10 @@
 #include "types.h"
 #include "user.h"
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define SQUARE_COLOR 0x7FE0
+#define SQUARE_SIZE 30
+
 int
 main(int argc, char *argv[])
 {
@@ -24,9 +28,9 @@ main(int argc, char *argv[])
   volatile ushort *video_buffer = malloc(300*400*2);
 
   if(!fork()) {
-    for(int i = 0; i < 300*400; i++) {
-      video_buffer[i] = color;
-    }
+    unsigned long long event;
+    int x_coord = 0;
+    int y_coord = 0;
     if(initwindow() != 0) {
       printf(1, "something's wrong!\n");
       exit();
@@ -35,10 +39,27 @@ main(int argc, char *argv[])
       printf(1, "something's wrong!\n");
       exit();
     }
-    if(drawwindow((void*)video_buffer) != 0) {
-	    printf(1, "something's wrong!\n");
+    while(1) {
+      for(int i = 0; i < 300*400; i++) {
+        video_buffer[i] = color;
+      }
+
+      if(getinput(&event) != -1) {
+        int type = (event >> 32) & 0xFFFFFFFF;
+        if(type == 6) {
+          x_coord = (event >> 16) & 0xFFFF;
+          y_coord = event & 0xFFFF;
+        }
+      }
+      for(int i = x_coord; i < MIN(x_coord+SQUARE_SIZE, 400); i++) {
+        for(int j = y_coord; j < MIN(y_coord+SQUARE_SIZE, 300); j++) {
+          video_buffer[j*400+i] = SQUARE_COLOR;
+        }
+      }
+      if(drawwindow((void*)video_buffer) != 0) {
+	      printf(1, "something's wrong!\n");
+      }
     }
-    while(1) {}
   } else {
     exit();
   }

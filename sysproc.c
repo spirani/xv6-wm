@@ -105,3 +105,17 @@ sys_drawwindow(void)
   video_window_copy_window(proc, window_buffer);
   return 0;
 }
+
+int
+sys_getinput(void)
+{
+  unsigned long long *event_buffer;
+  if(argptr(0, (void*)&event_buffer, sizeof(unsigned long long)) < 0)
+    return -1;
+  unsigned long long temp = video_event_dequeue(proc);
+  if(!((temp >> 32) & 0x0000FFFF)) {
+    return -1;
+  }
+  *event_buffer = temp;
+  return 0;
+}

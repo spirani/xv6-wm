@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_initwindow 22
 #define SYS_drawwindow 23
+#define SYS_getinput 24
