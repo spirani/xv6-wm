@@ -2,11 +2,12 @@
 #include "user.h"
 #include "font.h"
 
-#define FONT_MULTIPLIER 2
+#define FONT_HEIGHT_MULTIPLIER 2
+#define FONT_WIDTH_MULTIPLIER 1
 #define WINDOW_HEIGHT 300
 #define WINDOW_WIDTH 400
-#define FONT_HEIGHT ((FONT_MULTIPLIER)*8)
-#define FONT_WIDTH ((FONT_MULTIPLIER)*8)
+#define FONT_HEIGHT ((FONT_HEIGHT_MULTIPLIER)*8)
+#define FONT_WIDTH ((FONT_WIDTH_MULTIPLIER)*8)
 #define TERM_HEIGHT ((WINDOW_HEIGHT)/(FONT_HEIGHT))
 #define TERM_WIDTH ((WINDOW_WIDTH)/(FONT_WIDTH))
 
@@ -120,8 +121,8 @@ draw_term(volatile ushort *video_buffer)
         char_col = 0;
         for(unsigned int video_col = curr_col*FONT_WIDTH; video_col < (curr_col+1)*FONT_WIDTH; video_col++) {
           video_buffer[COORD_TO_LINEAR(video_row, video_col, WINDOW_WIDTH)] =
-            ((character >> (56 - 8*(char_row/FONT_MULTIPLIER))) &
-             (1 << (7-(char_col/FONT_MULTIPLIER)))) ? 0x7FFF : 0;
+            ((character >> (56 - 8*(char_row/FONT_HEIGHT_MULTIPLIER))) &
+             (1 << (7-(char_col/FONT_WIDTH_MULTIPLIER)))) ? 0x7FFF : 0;
           char_col++;
         }
         char_row++;
