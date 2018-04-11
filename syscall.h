@@ -23,3 +23,4 @@
 #define SYS_initwindow 22
 #define SYS_drawwindow 23
 #define SYS_getinput 24
+#define SYS_pipebytes 25

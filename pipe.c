@@ -118,3 +118,13 @@ piperead(struct pipe *p, char *addr, int n)
   release(&p->lock);
   return i;
 }
+
+int
+pipe_data_available(struct pipe *p)
+{
+  int to_return;
+  acquire(&p->lock);
+  to_return = p->nwrite - p->nread;
+  release(&p->lock);
+  return to_return;
+}

@@ -439,3 +439,15 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+int
+sys_pipebytes(void)
+{
+  struct file *f;
+
+  if(argfd(0, 0, &f) < 0)
+    return -1;
+  if(!f->pipe)
+    return -1;
+  return pipe_data_available(f->pipe);
+}

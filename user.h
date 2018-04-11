@@ -26,6 +26,7 @@ int uptime(void);
 int initwindow();
 int drawwindow(void*);
 int getinput(unsigned long long *);
+int pipebytes(int);
 
 // ulib.c
 int stat(char*, struct stat*);

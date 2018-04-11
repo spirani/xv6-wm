@@ -198,7 +198,7 @@ video_input_window_handle()
   new_event.mouse_data = 0;
   new_event.key_data = 0;
   if((!dragged_window) && windows_active) {
-    // Only queue up events if cursor is inside the window
+    // Only queue up mouse events if cursor is inside the window
     if((curr_mouse_x >= (window_stack[0]->x_pos +
                          WINDOW_BORDER_SIZE)) &&
        (curr_mouse_x <= (window_stack[0]->x_pos +
@@ -234,11 +234,12 @@ video_input_window_handle()
         new_event.type |= 16;
         new_event.mouse_data = (window_x << 16) | window_y;
       }
-      if(prev_kbd_key_identifier != curr_kbd_key_identifier) {
-        // Key pressed
-        new_event.type |= 32;
-        new_event.key_data = curr_kbd_pressed;
-      }
+    }
+    // Queue up keyboard events regardless of cursor
+    if(prev_kbd_key_identifier != curr_kbd_key_identifier) {
+      // Key pressed
+      new_event.type |= 32;
+      new_event.key_data = curr_kbd_pressed;
     }
   }
   if(new_event.type != 0) {

@@ -101,6 +101,7 @@ extern int sys_uptime(void);
 extern int sys_initwindow(void);
 extern int sys_drawwindow(void);
 extern int sys_getinput(void);
+extern int sys_pipebytes(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,6 +128,7 @@ static int (*syscalls[])(void) = {
 [SYS_initwindow] sys_initwindow,
 [SYS_drawwindow] sys_drawwindow,
 [SYS_getinput] sys_getinput,
+[SYS_pipebytes] sys_pipebytes,
 };
 
 void
