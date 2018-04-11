@@ -122,7 +122,7 @@ draw_term(volatile ushort *video_buffer)
         for(unsigned int video_col = curr_col*FONT_WIDTH; video_col < (curr_col+1)*FONT_WIDTH; video_col++) {
           video_buffer[COORD_TO_LINEAR(video_row, video_col, WINDOW_WIDTH)] =
             ((character >> (56 - 8*(char_row/FONT_HEIGHT_MULTIPLIER))) &
-             (1 << (7-(char_col/FONT_WIDTH_MULTIPLIER)))) ? 0x7FFF : 0;
+             (1 << (char_col/FONT_WIDTH_MULTIPLIER))) ? 0x7FFF : 0;
           char_col++;
         }
         char_row++;
