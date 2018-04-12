@@ -147,9 +147,11 @@ static void write_term(unsigned char write_data)
   if(write_data != '\n') {
     term_lines[active_term_line].data[term_lines[active_term_line].write_head] = write_data;
     term_lines[active_term_line].write_head += 1;
+    term_lines[active_term_line].data[term_lines[active_term_line].write_head] = 0;
   }
   if((term_lines[active_term_line].write_head >= TERM_WIDTH) ||
      (write_data == '\n') || (write_data == '\r')) {
+    term_lines[active_term_line].data[term_lines[active_term_line].write_head] = 32;
     active_term_line++;
   }
 }
