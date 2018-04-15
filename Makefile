@@ -177,6 +177,8 @@ UPROGS=\
 	_zombie\
 	_w_solid\
 	_w_term\
+	_print_gnome\
+	_block_game\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
