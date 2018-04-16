@@ -76,12 +76,13 @@ main(int argc, char *argv[])
       }
     }
   } else {
-    exit();
+    wait();
   }
+  exit();
 }
 
 static void
-get_new_square_coords(int* x, int* y) 
+get_new_square_coords(int* x, int* y)
 {
   long r = a * previous + c;
   previous = r;
