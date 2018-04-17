@@ -2,6 +2,7 @@
 #include "user.h"
 #include "font.h"
 
+#define green 0x0f00
 #define black 0xffff
 #define blue  0x00ff
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -16,17 +17,22 @@
 #define TERM_HEIGHT ((WINDOW_HEIGHT)/(FONT_HEIGHT))
 #define TERM_WIDTH ((WINDOW_WIDTH)/(FONT_WIDTH))
 
+#define KEY_W 119 
+#define KEY_A 97
+#define KEY_S 115
+#define KEY_D 100
+#define MOVE 5
+
 #define COORD_TO_LINEAR(r, c, w) ((r)*(w)+(c))
 
-long a = 2521490391;
-long c = 11;
-long previous = 0;
+unsigned int nSeed = 5323;
 int score = 0;
 
 static void get_new_square_coords(int*, int*);
 static int abs(int);
 static int collision(int, int, int, int);
-static void update_score(volatile ushort *);
+//static void update_score(volatile ushort *);
+static void move_block(int key, int*, int*);
 
 int
 main(int argc, char *argv[])
@@ -34,8 +40,8 @@ main(int argc, char *argv[])
   if(!fork()) {
     volatile ushort *video_buffer = malloc(300*400*2);
     unsigned long long event;
-    int x_coord = 0;
-    int y_coord = 0;
+    int x_coord = 50;
+    int y_coord = 50;
     int x_coord_sq = 0;
     int y_coord_sq = 0;
     if(initwindow() != 0) {
@@ -46,8 +52,9 @@ main(int argc, char *argv[])
       printf(1, "something's wrong!\n");
       exit();
     }
-    update_score(video_buffer);
+   // update_score(video_buffer);
     get_new_square_coords(&x_coord_sq, &y_coord_sq);
+    get_new_square_coords(&x_coord, &y_coord);
     while(1) {
       for(int i = 0; i < 300*400; i++) {
         video_buffer[i] = black;
@@ -55,20 +62,23 @@ main(int argc, char *argv[])
       unsigned long long character = font[48];
       video_buffer[200] = character;
       if(getinput(&event) != -1) {
-        int type = (event >> 48) & 0xFFFF;
-        if(type & 16) {
-          x_coord = (event >> 32) & 0xFFFF;
-          y_coord = (event >> 16) & 0xFFFF;
+        if (((event >> 48) & 0xffff) & 32) {
+          move_block(event & 0xffff, &x_coord_sq, &y_coord_sq);
         }
       }
       if (collision(x_coord, x_coord_sq, y_coord, y_coord_sq)) {
         get_new_square_coords(&x_coord_sq, &y_coord_sq);
-        update_score(video_buffer);
+	get_new_square_coords(&x_coord, &y_coord);
       }
-      get_new_square_coords(&x_coord_sq, &y_coord_sq);
       for(int i = MIN(x_coord_sq, 400-SQUARE_SIZE); i < MIN(x_coord_sq+SQUARE_SIZE, 400); i++) {
         for(int j = MIN(y_coord_sq, 300-SQUARE_SIZE); j < MIN(y_coord_sq+SQUARE_SIZE, 300); j++) {
           video_buffer[j*400+i] = blue;
+        }
+      }
+
+      for (int i = MIN(x_coord, 400-SQUARE_SIZE); i < MIN(x_coord+SQUARE_SIZE, 400); i++) {
+	for (int j = MIN(y_coord, 300-SQUARE_SIZE); j < MIN(y_coord + SQUARE_SIZE, 300); j++) {
+	  video_buffer[j*400+i] = green;
         }
       }
       if(drawwindow((void*)video_buffer) != 0) {
@@ -84,8 +94,8 @@ main(int argc, char *argv[])
 static void
 get_new_square_coords(int* x, int* y)
 {
-  long r = a * previous + c;
-  previous = r;
+  nSeed = (8253729 * nSeed + 2396403);
+  int r = nSeed % 32767;
   *x = r % 300;
   *y = r % 400;
 }
@@ -101,25 +111,33 @@ abs(int x)
 static int
 collision(int x1, int x2, int y1, int y2)
 {
-  int threshold = 10;
+  int threshold = SQUARE_SIZE;
   return (abs(x1 - x2) < threshold && abs(y1-y2) < threshold);
 }
 
+
+
 static void
-update_score(volatile ushort *video_buffer)
+move_block(int key, int* x, int* y)
 {
-  unsigned long long character, char_row, char_col;
-  character = font[48 + score];
-  char_row = 0;
-  for(unsigned int video_row = FONT_HEIGHT; video_row < 1+FONT_HEIGHT; video_row++) {
-    char_col = 0;
-    for(unsigned int video_col = FONT_WIDTH; video_col < 1+FONT_WIDTH; video_col++) {
-      video_buffer[COORD_TO_LINEAR(video_row, video_col, WINDOW_WIDTH)] =
-        ((character >> (56 - 8*(char_row/FONT_HEIGHT_MULTIPLIER))) &
-         (1 << (char_col/FONT_WIDTH_MULTIPLIER))) ? 0x7FFF : 0;
-      char_col++;
-    }
-    char_row++;
+  if (key == KEY_W) {
+    *y = *y - MOVE;
+    if (*y < 0)
+      *y = 0;
+  }
+  if (key == KEY_A) {
+    *x = *x - MOVE;
+    if (*x < 0)
+      *x = 0;
+  }
+  if (key == KEY_S) {
+    *y = *y + MOVE;
+    if (*y > 400)
+      *y = 400;
+  }
+  if (key == KEY_D) {
+    *x = *x + MOVE;
+    if (*x > 300)
+      *x = 300;
   }
 }
-
