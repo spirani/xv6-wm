@@ -17,7 +17,7 @@
 #define TERM_HEIGHT ((WINDOW_HEIGHT)/(FONT_HEIGHT))
 #define TERM_WIDTH ((WINDOW_WIDTH)/(FONT_WIDTH))
 
-#define KEY_W 119 
+#define KEY_W 119
 #define KEY_A 97
 #define KEY_S 115
 #define KEY_D 100
@@ -86,9 +86,8 @@ main(int argc, char *argv[])
       }
     }
   } else {
-    wait();
+    exit();
   }
-  exit();
 }
 
 static void
@@ -96,8 +95,8 @@ get_new_square_coords(int* x, int* y)
 {
   nSeed = (8253729 * nSeed + 2396403);
   int r = nSeed % 32767;
-  *x = r % 300;
-  *y = r % 400;
+  *x = r % (400 - SQUARE_SIZE);
+  *y = r % (300 - SQUARE_SIZE);
 }
 
 static int

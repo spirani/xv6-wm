@@ -62,7 +62,6 @@ main(int argc, char *argv[])
       }
     }
   } else {
-    wait();
+    exit();
   }
-  exit();
 }

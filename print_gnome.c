@@ -1,7 +1,6 @@
 #include "types.h"
 #include "user.h"
 #include "font.h"
-#include "printf.h"
 
 #define FONT_HEIGHT_MULTIPLIER 2
 #define FONT_WIDTH_MULTIPLIER 1
