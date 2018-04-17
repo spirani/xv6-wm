@@ -1,6 +1,6 @@
 // Cursor
-#define IMAGE_CURSOR_HEIGHT 16
-#define IMAGE_CURSOR_WIDTH 8
+#define IMAGE_CURSOR_HEIGHT 24
+#define IMAGE_CURSOR_WIDTH 12
 extern unsigned short IMAGE_CURSOR_DATA[];
 
 // Close button

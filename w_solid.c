@@ -2,13 +2,13 @@
 #include "user.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define SQUARE_COLOR 0x7FE0
 #define SQUARE_SIZE 30
 
 int
 main(int argc, char *argv[])
 {
   short color;
+  short square_color = 0x7FE0;
   if(argc != 2) {
     printf(2, "Usage: %s <color-name>\n", argv[0]);
     printf(2, "Available colors:\n", argv[0]);
@@ -51,10 +51,18 @@ main(int argc, char *argv[])
           x_coord = (event >> 32) & 0xFFFF;
           y_coord = (event >> 16) & 0xFFFF;
         }
+        if(type & 1)
+          square_color = 0x7C1F;
+        if(type & 2)
+          square_color = 0x7FE0;
+        if(type & 4)
+          square_color = 0x0000;
+        if(type & 8)
+          square_color = 0x7FE0;
       }
       for(int i = MIN(x_coord, 400-SQUARE_SIZE); i < MIN(x_coord+SQUARE_SIZE, 400); i++) {
         for(int j = MIN(y_coord, 300-SQUARE_SIZE); j < MIN(y_coord+SQUARE_SIZE, 300); j++) {
-          video_buffer[j*400+i] = SQUARE_COLOR;
+          video_buffer[j*400+i] = square_color;
         }
       }
       if(drawwindow((void*)video_buffer) != 0) {

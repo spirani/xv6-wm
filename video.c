@@ -91,7 +91,7 @@ video_updatescreen(void)
   // Copy and clear buffer
   for(int i = 0; i < VIDEO_HEIGHT*VIDEO_WIDTH*2/8; i++) {
     ((volatile ull *)VIDEO_BASE)[i] = ((volatile ull *)buffer)[i];
-    ((volatile ull *)buffer)[i] = 0;
+    ((volatile ull *)buffer)[i] = 0x14A014A014A014A0;
   }
 
   // Draw windows
@@ -107,8 +107,10 @@ video_updatescreen(void)
   // Draw cursor
   for(int r = 0; r < MIN(IMAGE_CURSOR_HEIGHT, VIDEO_HEIGHT-curr_mouse_y); r++) {
     for(int c = 0; c < MIN(IMAGE_CURSOR_WIDTH, VIDEO_WIDTH-curr_mouse_x); c++) {
-      buffer[COORD_TO_LINEAR(curr_mouse_y+r, curr_mouse_x+c, VIDEO_WIDTH)] =
-        IMAGE_CURSOR_DATA[COORD_TO_LINEAR(r, c, IMAGE_CURSOR_WIDTH)];
+      if(IMAGE_CURSOR_DATA[COORD_TO_LINEAR(r, c, IMAGE_CURSOR_WIDTH)] != 0xDEAD) {
+        buffer[COORD_TO_LINEAR(curr_mouse_y+r, curr_mouse_x+c, VIDEO_WIDTH)] =
+          IMAGE_CURSOR_DATA[COORD_TO_LINEAR(r, c, IMAGE_CURSOR_WIDTH)];
+      }
     }
   }
 
