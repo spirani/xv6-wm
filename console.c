@@ -201,25 +201,13 @@ consoleintr(int (*getc)(void))
       // procdump() locks cons.lock indirectly; invoke later
       doprocdump = 1;
       break;
-    case C('U'):  // Kill line.
-      while(input.e != input.w &&
-            input.buf[(input.e-1) % INPUT_BUF] != '\n'){
-        input.e--;
-        /* consputc(BACKSPACE); */
-      }
-      break;
     case C('H'): case '\x7f':  // Backspace
-      if(input.e != input.w){
-        input.e--;
-        /* consputc(BACKSPACE); */
-      }
       break;
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
         kbd_pressed = c;
         kbd_key_identifier++;
         c = (c == '\r') ? '\n' : c;
-        input.buf[input.e++ % INPUT_BUF] = c;
         /* consputc(c); */
         if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
           input.w = input.e;

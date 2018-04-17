@@ -84,20 +84,24 @@ init_win()
 int
 main(int argc, char *argv[])
 {
-  init_win();
-  volatile ushort* video_buffer = malloc(300*400*2);
-  if (initwindow()) {
-    printf(1, "Something's wrong");
-    exit();
-  }
-
-  while(*gnome != '\0') {
-    write_win(((unsigned long long) *gnome++) & 0xFFFF);
-    draw_win((void*)video_buffer);
-    if(drawwindow((void*)video_buffer) != 0) {
-      printf(1, "something's wrong!\n");
+  if(!fork()) {
+    init_win();
+    volatile ushort* video_buffer = malloc(300*400*2);
+    if (initwindow()) {
+      printf(1, "Something's wrong");
       exit();
     }
+
+    while(*gnome != '\0') {
+      write_win(((unsigned long long) *gnome++) & 0xFFFF);
+      draw_win((void*)video_buffer);
+      if(drawwindow((void*)video_buffer) != 0) {
+        printf(1, "something's wrong!\n");
+        exit();
+      }
+    }
+    exit();
+  } else {
+    exit();
   }
-  exit();
 }

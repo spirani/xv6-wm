@@ -131,12 +131,12 @@ move_block(int key, int* x, int* y)
   }
   if (key == KEY_S) {
     *y = *y + MOVE;
-    if (*y > 400)
-      *y = 400;
+    if (*y > (300-SQUARE_SIZE))
+      *y = (300-SQUARE_SIZE);
   }
   if (key == KEY_D) {
     *x = *x + MOVE;
-    if (*x > 300)
-      *x = 300;
+    if (*x > (400-SQUARE_SIZE))
+      *x = (400-SQUARE_SIZE);
   }
 }
